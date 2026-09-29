@@ -1,0 +1,131 @@
+@import "tailwindcss";
+@config "../tailwind.config.js";
+
+@custom-variant dark (&:where(.dark, .dark *, [data-mantine-color-scheme="dark"], [data-mantine-color-scheme="dark"] *));
+
+@theme {
+  --color-brand-50: #f4feea;
+  --color-brand-100: #cfffab;
+  --color-brand-200: #c6f486;
+  --color-brand-300: #95e913;
+  --color-brand-400: #85f40f;
+  --color-brand-500: #6cc80a;
+  --color-brand-600: #549e06;
+  --color-brand-700: #3d7603;
+  --color-brand-800: #275001;
+  --color-brand-900: #132d00;
+  --color-brand-950: #061400;
+
+  --color-accent: #85f40f;
+  --color-accent-hover: #95e913;
+
+  --color-surface-light: #ffffff;
+  --color-surface-dark: #0c101d;
+  
+  --color-bg-light: #f8fafc;
+  --color-bg-dark: #0c101d;
+
+  --color-panel-dark: #0c101d;
+  --color-sidebar-dark: #0e1517;
+  --color-navbar-dark: #0e1517;
+  
+  --color-card-light: #ffffff;
+  --color-card-dark: #0e1517;
+  
+  --color-border-light: #e2e8f0;
+  --color-border-dark: #1a2333;
+  
+  --color-muted-light: #64748b;
+  --color-muted-dark: #94a3b8;
+}
+
+/* Custom Gradients from Image 3 Palette */
+.bg-tab-gradient {
+  background: linear-gradient(90deg, rgba(39, 80, 1, 0.75) 0%, rgba(19, 45, 0, 0.85) 100%);
+}
+
+.bg-btn-gradient {
+  background: linear-gradient(135deg, #85F40F 0%, #6CC80A 100%);
+  color: #061400;
+}
+
+.bg-btn-gradient:hover {
+  background: linear-gradient(135deg, #95E913 0%, #79BE0D 100%);
+  box-shadow: 0 0 20px rgba(133, 244, 15, 0.45);
+}
+
+.glow-neon-sm {
+  box-shadow: 0 0 12px rgba(133, 244, 15, 0.35);
+}
+
+.glow-neon-lg {
+  box-shadow: 0 0 25px rgba(133, 244, 15, 0.5);
+}
+
+/* Remove Mantine Tabs default vertical/horizontal border lines */
+.mantine-Tabs-list::before {
+  display: none !important;
+  content: none !important;
+  border: none !important;
+}
+
+.mantine-Tabs-list {
+  border: none !important;
+}
+
+.mantine-Tabs-tab {
+  border-radius: 1rem !important;
+}
+
+/* Ensure navbar and sidebar are clean white in light mode, and #0e1517 in dark mode */
+[data-sidebar="true"] {
+  background-color: #ffffff;
+}
+
+.dark nav,
+[data-mantine-color-scheme="dark"] nav,
+.dark [data-sidebar="true"],
+[data-mantine-color-scheme="dark"] [data-sidebar="true"] {
+  background-color: #0e1517 !important;
+}
+
+.dark [data-panel="true"],
+[data-mantine-color-scheme="dark"] [data-panel="true"] {
+  background-color: #0c101d !important;
+}
+
+:root {
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-arabic: 'Cairo', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+body {
+  font-family: var(--font-sans);
+}
+
+[dir="rtl"] {
+  font-family: var(--font-arabic);
+}
+
+[dir="ltr"] {
+  font-family: var(--font-sans);
+}
+
+/* Custom subtle scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(156, 163, 175, 0.4);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(107, 114, 128, 0.7);
+}

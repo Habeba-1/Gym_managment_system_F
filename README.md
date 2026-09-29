@@ -1,1848 +1,359 @@
-Gym Management System (GMS)
-
-1. نظرة عامة
-
-نظام إدارة جيمات متعدد المستأجرين SaaS موجه للجيمات الصغيرة والمتوسطة. يهدف النظام إلى إدارة الأعضاء والاشتراكات والحضور والموظفين والمصروفات والمتجر والتقارير من خلال لوحة تحكم واحدة.
-
-الهدف
-
-توفير نظام بسيط وسريع يساعد صاحب الجيم وموظف الاستقبال على:
-
-•
-إدارة بيانات الأعضاء والاشتراكات.
-
-•
-تسجيل الحضور بسرعة حتى مع ضعف الاتصال.
-
-•
-معرفة حالة الأعضاء والتواصل معهم.
-
-•
-متابعة المصروفات والإيرادات وصافي الربح.
-
-•
-إدارة الموظفين والشيفتات والمتجر والمعدات.
-
-•
-عزل بيانات كل جيم عن الجيمات الأخرى.
-
-المستخدمون الأساسيون
-
-الدور
-الاستخدام والصلاحيات
-Owner
-وصول كامل إلى بيانات الجيم، الأعضاء، الاشتراكات، التقارير، المصروفات، المتجر، الموظفين والإعدادات.
-Receptionist
-إدارة الأعضاء والاشتراكات والحضور والتواصل، مع منع الوصول إلى البيانات المالية الحساسة والإعدادات المقيدة.
-
-
-
-
-
-النظام لا يدعم التسجيل الذاتي للمستخدمين. يتم إنشاء المستخدمين أو دعوتهم من خلال صاحب الجيم أو المسؤول عن النظام.
-
-
-
-
-2. المشكلة التي يحلها النظام
-
-تعاني الجيمات الصغيرة والمتوسطة عادةً من:
-
-•
-إدارة اشتراكات يدوية أو غير منظمة.
-
-•
-صعوبة معرفة الأعضاء الموجودين حاليًا.
-
-•
-عدم وجود تنبيهات للأعضاء الجدد أو القريب انتهاء اشتراكهم أو المنقطعين.
-
-•
-عدم وجود متابعة واضحة للإيرادات والمصروفات وصافي الربح.
-
-•
-فصل إدارة المتجر والمعدات والموظفين عن باقي العمليات.
-
-•
-صعوبة الحفاظ على البيانات عند انقطاع الإنترنت.
-
-
-
-
-3. نطاق المشروع
-
-3.1 نطاق الـ MVP
-
-الـ MVP الأساسي يتكون من الـ Features من 0 إلى 4:
-
-1.
-المصادقة والصلاحيات.
-
-2.
-الأعضاء والاشتراكات.
-
-3.
-الحضور.
-
-4.
-التصنيف والتواصل.
-
-5.
-الداشبورد الرئيسية.
-
-3.2 Features التوسع
-
-الـ Features من 5 إلى 10 تمثل التوسع التشغيلي والمالي:
-
-•
-الموظفون والشيفتات.
-
-•
-المصروفات التشغيلية.
-
-•
-التقرير المالي الشامل.
-
-•
-المتجر الداخلي.
-
-•
-المعدات والصيانة.
-
-•
-التذكيرات الإدارية.
-
-في خطة التنفيذ الحالية سيتم إنهاء جميع الـ Features من 0 إلى 10 خلال أسبوعين، مع تنفيذ الأولويات الأساسية أولًا ثم الربط والاختبار.
-
-
-
-
-4. تقسيم الفريق
-
-العضو
-المسؤولية
-الـ Features
-يوسف
-Core & Members
-Feature 0 وFeature 1
-مريم
-Operations & Engagement
-Feature 2 وFeature 3
-مؤمن
-Finance & Analytics
-Feature 4 وFeature 6 وFeature 7
-محمد
-Staff, Store & Facilities
-Feature 5 وFeature 8 وFeature 9 وFeature 10
-
-
-
-
-مسؤولية مشتركة للفريق
-
-•
-مراجعة الـ Database Schema.
-
-•
-الاتفاق على الـ API Contract.
-
-•
-الالتزام بالـ Git workflow.
-
-•
-دعم العربية وRTL.
-
-•
-اختبار حالات Loading وSuccess وError وEmpty وDisabled.
-
-•
-فتح Pull Request قبل الدمج.
-
-
-
-
-5. تفاصيل الـ Features
-
-Feature 0 — Authentication & Authorization
-
-المسؤول: يوسف
-
-المطلوب
-
-•
-تسجيل الدخول باستخدام البريد الإلكتروني أو رقم الهاتف وكلمة المرور.
-
-•
-إصدار JWT Access Token بعد نجاح الدخول.
-
-•
-تفعيل Refresh Token لمدة 30 دقيقة من خلال HttpOnly Cookie.
-
-•
-تنفيذ refresh لتجديد الجلسة عند انتهاء الـ Access Token.
-
-•
-تنفيذ logout وإنهاء الجلسة.
-
-•
-استخدام bcrypt لتشفير كلمات المرور.
-
-•
-تطبيق Role-Based Access Control للأدوار Owner وReceptionist.
-
-•
-تطبيق ProtectedRoute وRoleGuard على الواجهة والـ Backend.
-
-•
-منع Self-Signup.
-
-•
-إضافة Input Validation وRate Limiting على الـ endpoints الحساسة.
-
-•
-التأكد من استخدام HTTPS في بيئة التشغيل.
-
-User Flow
-
-1.
-يفتح المستخدم شاشة تسجيل الدخول.
-
-2.
-يدخل الهاتف أو البريد وكلمة المرور.
-
-3.
-يتحقق النظام من البيانات ويرجع Access Token وRefresh Token وgym_id.
-
-4.
-يتم تخزين الـ Refresh Token في HttpOnly Cookie.
-
-5.
-عند انتهاء الـ Access Token، يتم استدعاء /api/auth/refresh تلقائيًا.
-
-6.
-عند تسجيل الخروج يتم إلغاء الجلسة.
-
-API
-
-Plain Text
-
-
-POST /api/auth/login
-POST /api/auth/refresh
-POST /api/auth/logout
-
-
-
-معايير القبول
-
-•
-بيانات الدخول الصحيحة تعيد Token صالحًا.
-
-•
-بيانات الدخول الخاطئة تعيد رسالة خطأ واضحة.
-
-•
-أي endpoint محمي يرفض الطلب بدون Token صالح.
-
-•
-المستخدم لا يستطيع الوصول إلى بيانات جيم آخر.
-
-•
-صلاحيات Owner وReceptionist تعمل على الـ Backend وليس الواجهة فقط.
-
-
-
-
-Feature 1 — Members & Subscriptions
-
-المسؤول: يوسف
-
-المطلوب
-
-•
-CRUD كامل للأعضاء.
-
-•
-البحث والتصفية عن الأعضاء.
-
-•
-الحقول الأساسية: الاسم، الهاتف، البريد، الصورة، تاريخ الانضمام.
-
-•
-Soft Delete للأعضاء بدل الحذف النهائي.
-
-•
-CRUD للباقات.
-
-•
-أنواع الباقات مثل يومي أو أسبوعي أو 2x/3x أسبوعيًا.
-
-•
-تحديد مدة الباقة وسعرها وabsence_threshold_days.
-
-•
-إنشاء الاشتراك وتجديده.
-
-•
-تثبيت طريقة الدفع على Cash في نسخة الـ MVP.
-
-•
-حفظ حالة الدفع.
-
-•
-تحديد start_date وend_date.
-
-•
-تطبيق gym_id على جميع السجلات.
-
-API
-
-Plain Text
-
-
-GET    /api/members
-POST   /api/members
-GET    /api/members/{id}
-PUT    /api/members/{id}
-DELETE /api/members/{id}
-
-GET    /api/plans
-POST   /api/plans
-PUT    /api/plans/{id}
-DELETE /api/plans/{id}
-
-POST   /api/subscriptions
-POST   /api/subscriptions/renew
-
-
-
-معايير القبول
-
-•
-يمكن إنشاء وتعديل وعرض وحذف العضو حذفًا منطقيًا.
-
-•
-لا يمكن إنشاء عضو ببيانات غير صحيحة أو رقم مكرر.
-
-•
-يمكن إنشاء باقة وربطها باشتراك.
-
-•
-لا يمكن لمستخدم من جيم الوصول إلى أعضاء جيم آخر.
-
-•
-يتم تحديث end_date بشكل صحيح عند التجديد.
-
-
-
-
-Feature 2 — Attendance
-
-المسؤول: مريم
-
-المطلوب
-
-•
-تسجيل الحضور بسرعة بالبحث عن الاسم أو الهاتف.
-
-•
-دعم QR Check-in إذا تم اعتماده ضمن الـ MVP.
-
-•
-التحقق من صلاحية الاشتراك قبل تسجيل الحضور.
-
-•
-تسجيل check_in_time.
-
-•
-تحديث last_attendance للعضو.
-
-•
-شاشة "الموجودين حاليًا".
-
-•
-دعم Offline Sync باستخدام local_id.
-
-•
-منع تكرار سجل الحضور عند المزامنة.
-
-•
-استخدام تخزين محلي مثل IndexedDB أو LocalStorage عند الحاجة.
-
-API
-
-Plain Text
-
-
-POST /api/attendance/check-in
-GET  /api/attendance/today
-POST /api/attendance/sync
-
-
-
-معايير القبول
-
-•
-تسجيل حضور العضو ذي الاشتراك الساري ينجح فورًا.
-
-•
-العضو منتهي الاشتراك يحصل على رسالة واضحة ولا يتم تسجيل حضوره.
-
-•
-شاشة الموجودين تعرض بيانات اليوم.
-
-•
-الطلبات التي تمت Offline تتم مزامنتها بعد عودة الاتصال.
-
-•
-local_id يمنع تكرار نفس العملية.
-
-Edge Cases
-
-•
-العضو يحاول تسجيل الحضور مرتين في نفس الوقت.
-
-•
-الجهاز يعود للاتصال بعد وجود عدة عمليات محلية.
-
-•
-العضو غير موجود.
-
-•
-العضو لديه اشتراك منتهي.
-
-•
-اختلاف الوقت أو التاريخ بين الجهاز والسيرفر.
-
-
-
-
-Feature 3 — Classification & Communication
-
-المسؤول: مريم
-
-المطلوب
-
-تقسيم الأعضاء إلى أربع فئات:
-
-1.
-New — عضو جديد.
-
-2.
-Expiring — الاشتراك قريب من الانتهاء.
-
-3.
-Inactive — عضو مختفي حسب حد الغياب.
-
-4.
-Expired — الاشتراك منتهي.
-
-يعتمد التصنيف على:
-
-•
-last_attendance.
-
-•
-end_date.
-
-•
-absence_threshold_days.
-
-•
-حالة الاشتراك.
-
-التواصل
-
-•
-إدارة قوالب الرسائل.
-
-•
-قالب لكل فئة.
-
-•
-تعديل نص الرسالة.
-
-•
-توليد رابط WhatsApp من نوع wa.me.
-
-•
-لا يوجد إرسال تلقائي في الـ MVP؛ يتم فتح الرابط للمستخدم.
-
-API
-
-Plain Text
-
-
-GET /api/members/segmented
-GET /api/message-templates
-PUT /api/message-templates/{id}
-
-
-
-معايير القبول
-
-•
-العضو يظهر في الفئة الصحيحة.
-
-•
-الأعداد في التبويبات متوافقة مع البيانات.
-
-•
-الرسالة الصحيحة ترتبط بالفئة الصحيحة.
-
-•
-رابط WhatsApp يحتوي رقم الهاتف والنص بعد ترميزه بشكل صحيح.
-
-
-
-
-Feature 4 — Main Dashboard
-
-المسؤول: مؤمن
-
-المطلوب
-
-•
-كروت الأرقام السريعة.
-
-•
-إجمالي الأعضاء.
-
-•
-الاشتراكات السارية والقريبة من الانتهاء والمنتهية.
-
-•
-عدد الموجودين اليوم.
-
-•
-عدادات التصنيفات الأربعة.
-
-•
-فلاتر حسب الحالة والفترة.
-
-•
-Charts مناسبة للبيانات.
-
-•
-دعم RTL وResponsive UI.
-
-•
-حالات Loading وEmpty وError.
-
-API
-
-Plain Text
-
-
-GET /api/dashboard/stats
-
-
-
-معايير القبول
-
-•
-الأرقام في الداشبورد تأتي من البيانات الفعلية.
-
-•
-الفلاتر تحدث النتائج بشكل صحيح.
-
-•
-لا تظهر أخطاء عند عدم وجود بيانات.
-
-•
-الداشبورد تعمل على أحجام الشاشات الأساسية.
-
-
-
-
-Feature 5 — Staff & Shifts
-
-المسؤول: محمد
-
-المطلوب
-
-•
-إدارة الموظفين والمدربين.
-
-•
-الأدوار: owner وreceptionist وtrainer.
-
-•
-إنشاء وتعديل وحذف الشيفتات.
-
-•
-تقويم للشيفتات.
-
-•
-حضور وانصراف الموظفين منفصل عن الأعضاء.
-
-•
-حفظ check_in_time وcheck_out_time.
-
-API
-
-Plain Text
-
-
-GET  /api/staff
-POST /api/staff
-GET  /api/shifts
-POST /api/shifts
-POST /api/staff/attendance
-
-
-
-
-
-
-Feature 6 — Operational Expenses
-
-المسؤول: مؤمن
-
-المطلوب
-
-•
-تسجيل وتعديل وحذف المصروفات.
-
-•
-التصنيفات:
-
-•
-Rent — إيجار.
-
-•
-Salaries — مرتبات.
-
-•
-Bills — فواتير.
-
-•
-Maintenance — صيانة.
-
-•
-Other — أخرى.
-
-
-
-•
-حفظ المبلغ والتاريخ والملاحظات.
-
-•
-الفلاتر الزمنية والتصنيف.
-
-•
-إجمالي المصروفات.
-
-•
-عزل البيانات باستخدام gym_id.
-
-API
-
-Plain Text
-
-
-GET  /api/expenses
-POST /api/expenses
-
-
-
-
-
-
-Feature 7 — Comprehensive Financial Report
-
-المسؤول: مؤمن
-
-المطلوب
-
-حساب صافي الربح تلقائيًا وفق المعادلة:
-
-Plain Text
-
-
-Net Profit = Cash Subscription Revenue + Store Sales - Expenses
-
-
-
-مصادر البيانات
-
-•
-إيرادات الاشتراكات التي طريقة دفعها Cash.
-
-•
-إجمالي مبيعات المتجر.
-
-•
-إجمالي المصروفات.
-
-API
-
-Plain Text
-
-
-GET /api/reports/financial-summary
-
-
-
-معايير القبول
-
-•
-المعادلة تحسب النتائج بشكل صحيح.
-
-•
-الفلاتر الزمنية تعمل.
-
-•
-لا يتم احتساب بيانات من جيم آخر.
-
-•
-التقرير يعرض حالة واضحة عند عدم وجود بيانات.
-
-
-
-
-Feature 8 — Internal Store
-
-المسؤول: محمد
-
-المطلوب
-
-•
-إدارة المنتجات.
-
-•
-حفظ الاسم والكمية وسعر الوحدة.
-
-•
-البيع السريع.
-
-•
-تسجيل عمليات البيع.
-
-•
-خصم المخزون تلقائيًا بعد البيع.
-
-•
-منع البيع عند نفاد الكمية.
-
-•
-حساب إجمالي العملية.
-
-API
-
-Plain Text
-
-
-GET  /api/store/products
-POST /api/store/products
-POST /api/store/sales
-
-
-
-
-
-
-Feature 9 — Equipment & Maintenance
-
-المسؤول: محمد
-
-المطلوب
-
-•
-سجل المعدات.
-
-•
-الاسم وتاريخ الشراء.
-
-•
-تاريخ آخر صيانة.
-
-•
-حساب موعد الصيانة القادمة.
-
-•
-عرض المعدات المستحقة للصيانة.
-
-•
-تعديل بيانات المعدات.
-
-API
-
-Plain Text
-
-
-GET  /api/equipment
-POST /api/equipment
-PUT  /api/equipment/{id}
-
-
-
-
-
-
-Feature 10 — Administrative Reminders
-
-المسؤول: محمد
-
-المطلوب
-
-•
-إنشاء التذكيرات الإدارية.
-
-•
-عنوان التذكير.
-
-•
-تاريخ الاستحقاق.
-
-•
-ملاحظة التذكير.
-
-•
-عرض التذكيرات القادمة والمستحقة.
-
-•
-ربط التذكيرات بـ gym_id.
-
-API
-
-Plain Text
-
-
-GET  /api/reminders
-POST /api/reminders
-
-
-
-
-
-
-6. Database Schema
-
-Gyms
-
-الحقل
-الوصف
-id
-المعرف الأساسي
-name
-اسم الجيم
-owner_phone
-رقم صاحب الجيم
-subscription_tier
-نوع اشتراك الجيم في النظام
-created_at
-تاريخ الإنشاء
-
-
-
-
-Members
-
-الحقل
-الوصف
-id
-المعرف
-gym_id
-الجيم المالك للبيانات
-name
-اسم العضو
-phone
-الهاتف
-email
-البريد
-photo_url
-رابط الصورة
-join_date
-تاريخ الانضمام
-deleted_at
-تاريخ الـ Soft Delete إن وجد
-
-
-
-
-Plans
-
-الحقل
-الوصف
-id
-المعرف
-gym_id
-الجيم
-name
-اسم الباقة
-type
-نوع الباقة
-duration_days
-المدة بالأيام
-price
-السعر
-absence_threshold_days
-حد اعتبار العضو مختفيًا
-
-
-
-
-Subscriptions
-
-الحقل
-الوصف
-id
-المعرف
-member_id
-العضو
-plan_id
-الباقة
-start_date
-بداية الاشتراك
-end_date
-نهاية الاشتراك
-payment_status
-حالة الدفع
-payment_method
-طريقة الدفع، Cash في الـ MVP
-
-
-
-
-Attendance
-
-الحقل
-الوصف
-id
-المعرف
-member_id
-العضو
-check_in_time
-وقت الحضور
-local_id
-معرف العملية المحلية للمزامنة
-
-
-
-
-Message_Templates
-
-الحقل
-الوصف
-id
-المعرف
-gym_id
-الجيم
-category
-new / expiring / inactive / expired
-template_text
-نص الرسالة
-
-
-
-
-Staff
-
-الحقل
-الوصف
-id
-المعرف
-gym_id
-الجيم
-name
-الاسم
-phone
-الهاتف
-role
-owner / receptionist / trainer
-
-
-
-
-Shifts
-
-الحقل
-الوصف
-id
-المعرف
-staff_id
-الموظف
-shift_date
-تاريخ الشيفت
-start_time
-وقت البداية
-end_time
-وقت النهاية
-
-
-
-
-Staff_Attendance
-
-الحقل
-الوصف
-id
-المعرف
-staff_id
-الموظف
-check_in_time
-وقت الحضور
-check_out_time
-وقت الانصراف
-
-
-
-
-Expenses
-
-الحقل
-الوصف
-id
-المعرف
-gym_id
-الجيم
-category
-rent / salaries / bills / maintenance / other
-amount
-المبلغ
-expense_date
-التاريخ
-notes
-ملاحظات
-
-
-
-
-Store_Products
-
-الحقل
-الوصف
-id
-المعرف
-gym_id
-الجيم
-name
-اسم المنتج
-quantity
-الكمية
-unit_price
-سعر الوحدة
-
-
-
-
-Store_Sales
-
-الحقل
-الوصف
-id
-المعرف
-gym_id
-الجيم
-product_id
-المنتج
-quantity_sold
-الكمية المباعة
-total_amount
-إجمالي البيع
-sale_date
-تاريخ البيع
-
-
-
-
-Equipment
-
-الحقل
-الوصف
-id
-المعرف
-gym_id
-الجيم
-name
-اسم المعدة
-purchase_date
-تاريخ الشراء
-last_maintenance_date
-آخر صيانة
-next_maintenance_due
-الصيانة القادمة
-
-
-
-
-Admin_Reminders
-
-الحقل
-الوصف
-id
-المعرف
-gym_id
-الجيم
-title
-عنوان التذكير
-due_date
-تاريخ الاستحقاق
-reminder_note
-الملاحظة
-
-
-
-
-
-
-
-7. Multi-tenancy وعزل البيانات
-
-النظام SaaS ويخدم أكثر من جيم على نفس التطبيق. لذلك:
-
-•
-كل جدول تشغيلي يجب أن يحتوي على gym_id مباشرة أو من خلال علاقة واضحة.
-
-•
-يتم استخراج gym_id من المستخدم بعد تسجيل الدخول.
-
-•
-لا يرسل العميل gym_id كمرجع موثوق وحده؛ الـ Backend يفرضه من الجلسة.
-
-•
-كل Query يجب أن يفلتر حسب gym_id.
-
-•
-لا يستطيع Owner من جيم الوصول إلى بيانات جيم آخر.
-
-•
-يجب تطبيق العزل على الـ API وليس على الواجهة فقط.
-
-
-
-
-8. Tech Stack المقترح
-
-الجزء
-التقنية
-Frontend
-React / Next.js
-Backend
-Laravel PHP
-Database
-MySQL
-State Management
-Zustand أو Context للـ Global State
-Server State
-React Query
-Forms
-React Hook Form + Zod أو بديل مناسب
-Authentication
-JWT + Refresh Token + HttpOnly Cookie
-WhatsApp
-Click-to-Chat باستخدام wa.me
-Hosting
-Railway أو Render
-
-
-
-
-قواعد Frontend
-
-•
-استخدام React Query لكل Server State.
-
-•
-عدم إعادة اختراع useState + useEffect لكل API.
-
-•
-استخدام Axios instance مع Interceptors للـ JWT.
-
-•
-التعامل مع 401 وتجديد الجلسة تلقائيًا.
-
-•
-استخدام Protected Routes وRole Guards.
-
-•
-دعم RTL من أول يوم وليس في نهاية المشروع.
-
-•
-توحيد Loading/Error/Empty/Disabled states.
-
-قواعد Backend
-
-•
-الصلاحيات تطبق على الـ Backend دائمًا.
-
-•
-إضافة Validation وSanitization لكل مدخلات المستخدم.
-
-•
-استخدام Rate Limiting على Login وEndpoints الحساسة.
-
-•
-عدم إرجاع بيانات جيم آخر حتى لو تم تعديل الطلب يدويًا.
-
-•
-استخدام Responses موحدة.
-
-
-
-
-9. API Contract
-
-Headers
-
-Plain Text
-
-
-Authorization: Bearer <access_token>
-Content-Type: application/json
-
-
-
-Success Response
-
-JSON
-
-
-{
-  "success": true,
-  "message": "تمت العملية بنجاح",
-  "data": {}
-}
-
-
-
-Error Response
-
-JSON
-
-
-{
-  "success": false,
-  "message": "الباسورد غلط أو رقم التليفون مكرر"
-}
-
-
-
-قواعد عامة
-
-•
-كل Endpoint محمي يحتاج Access Token صالحًا.
-
-•
-عند انتهاء Access Token يتم استخدام Refresh Token.
-
-•
-كل Response يجب أن يكون واضحًا وقابلًا للمعالجة من الواجهة.
-
-•
-الأخطاء يجب أن تعود برسالة مفهومة وكود HTTP مناسب.
-
-•
-العمليات الحساسة مثل الحضور Offline يجب أن تكون Idempotent باستخدام local_id.
-
-
-
-
-10. Git Workflow
-
-الفروع الرئيسية
-
-•
-main: نسخة Production.
-
-•
-staging: نسخة الاختبار.
-
-•
-Feature Branch: فرع منفصل لكل Feature.
-
-طريقة العمل
-
-Bash
-
-
+# 🏋️ FitPulse — Gym Management System (GMS) Frontend Dashboard
+
+A modern, multi-tenant **SaaS Gym Management System** frontend dashboard built with **React 19 + Vite + Redux Toolkit (RTK Query) + Mantine UI + Tailwind CSS**. 
+
+The architecture follows a modular, enterprise-grade pattern inspired by the **Alegny Dashboard Architecture**:
+- Unified Dark / Light mode synchronization between Tailwind CSS and Mantine UI.
+- Real-time Language & Direction switching (Arabic RTL & English LTR).
+- Collapsible sidebar navigation powered by a reusable `SharedTabs` menu.
+- Normalized data fetching with **RTK Query**, featuring separated API modules per feature and automatic token re-authentication.
+
+---
+
+## 📑 Table of Contents
+
+- [1. Overview & Objectives](#1-overview--objectives)
+- [2. Tech Stack](#2-tech-stack)
+- [3. Project Architecture & Folder Structure](#3-project-architecture--folder-structure)
+- [4. Getting Started & Installation](#4-getting-started--installation)
+- [5. Dark Mode, Light Mode & RTL Localization](#5-dark-mode-light-mode--rtl-localization)
+- [6. Navigation Architecture (NavBar & SharedTabs)](#6-navigation-architecture-navbar--sharedtabs)
+- [7. State Management & RTK Query Architecture](#7-state-management--rtk-query-architecture)
+- [8. Official API Contract & Endpoint Catalog](#8-official-api-contract--endpoint-catalog)
+- [9. Team Division & Sprint Breakdown](#9-team-division--sprint-breakdown)
+- [10. Multi-Tenancy & Data Isolation](#10-multi-tenancy--data-isolation)
+- [11. Git Workflow & Collaboration Rules](#11-git-workflow--collaboration-rules)
+
+---
+
+## 1. Overview & Objectives
+
+### The Problem FitPulse Solves
+Small and medium gym facilities typically suffer from:
+- Manual, paper-based, or fragmented subscription tracking.
+- Inability to quickly check who is currently inside the gym.
+- Lack of proactive notifications for expiring subscriptions, newcomers, or churned members.
+- Disconnected store sales, staff shifts, and maintenance records.
+- Difficulty calculating accurate net profit across cash subscriptions, store sales, and operational expenses.
+- Data loss or operational blockage when internet connectivity drops.
+
+### Core Objectives
+1. **Speed & Reliability**: Instant check-in and search, with offline sync capabilities via idempotent `local_id`.
+2. **Role-Based Access Control (RBAC)**:
+   - **Owner**: Full access to all gym records, financials, staff, store, equipment, expenses, and system settings.
+   - **Receptionist**: Dedicated operational access to members, subscriptions, attendance check-in, and member messaging. Sensitive financial metrics and configuration are restricted.
+3. **Multi-Tenant SaaS Isolation**: Complete isolation of gym records using `gym_id`.
+4. **No Self-Registration**: Accounts are invited/provisioned by the Gym Owner or System Administrator.
+
+---
+
+## 2. Tech Stack
+
+| Domain | Technology / Library | Purpose |
+| :--- | :--- | :--- |
+| **Runtime & Bundler** | [Vite](https://vite.dev/) | Ultra-fast HMR and optimized production building |
+| **Framework** | [React 19](https://react.dev/) (JS / JSX) | Component-driven UI architecture |
+| **Routing** | [React Router DOM v7](https://reactrouter.com/) | Client-side routing, nested routes, and route guards |
+| **Styling** | [Tailwind CSS v4](https://tailwindcss.com/) + [Mantine UI v7+](https://mantine.dev/) | Utility-first styling paired with accessible Mantine UI components & hooks |
+| **State & Data Fetching** | [Redux Toolkit & RTK Query](https://redux-toolkit.js.org/) | Global state, normalized cache, automatic tag invalidation, and queries |
+| **HTTP Layer** | `fetchBaseQuery` (RTK Query) | JWT Bearer headers, language injection, and automatic 401 reauth retry |
+| **Localization (i18n)** | [i18next](https://www.i18next.com/) + `react-i18next` | Arabic (`ar`) & English (`en`) with dynamic RTL/LTR direction switching |
+| **Session Management** | `js-cookie` | Token and session cookie persistence with inactivity timeout protection |
+| **Iconography** | [React Icons](https://react-icons.github.io/react-icons/) | Feather Icons (`fi`), Hi Icons (`hi`, `hi2`), and Material Icons (`md`) |
+
+---
+
+## 3. Project Architecture & Folder Structure
+
+Following the modular **Alegny Dashboard** structure:
+
+```
+Gym_managment_system_F/
+├── public/
+│   └── assets/                     # Static assets and branding logos
+│       └── logo.svg
+├── src/
+│   ├── AuthContext/                # Authentication & Session Management
+│   │   └── AuthProvider.jsx        # AuthContext, Cookies, inactivity timer, login/logout
+│   ├── Context/                    # Global UI Contexts
+│   │   ├── LanguageContext.jsx     # i18n initialization, language switcher, RTL/LTR sync
+│   │   └── ThemeContext.jsx        # Dark/Light mode toggle with Mantine & Tailwind sync
+│   ├── Components/                 # Shared UI Components
+│   │   ├── CustomeRoute/           # Protected and Public route guards
+│   │   │   ├── ProtectedRoute.jsx
+│   │   │   └── PublicRoute.jsx
+│   │   ├── NotFound/               # 404 error page
+│   │   ├── Loader.jsx              # Centered Mantine loader overlay
+│   │   ├── Logo.jsx                # Collapsible brand logo widget
+│   │   └── SearchInput.jsx         # Debounced search bar with clear button
+│   ├── Header/                     # Top Navigation Bar
+│   │   └── NavBar.jsx              # Search bar, language toggle, theme toggle, user menu
+│   ├── Menu/                       # Navigation Menus
+│   │   └── SharedTabs.jsx          # Reusable Mantine Tabs menu with active states
+│   ├── Pages/                      # Feature Views
+│   │   ├── Dashboard.jsx           # Main layout with collapsible sidebar & Outlet
+│   │   ├── DashboardOverview/      # Default overview KPI metrics (Feature 4)
+│   │   ├── Members/                # Members & Subscriptions (Feature 1)
+│   │   ├── Attendance/             # Attendance & Active Inside (Feature 2)
+│   │   ├── Communication/          # Segments & WhatsApp Messaging (Feature 3)
+│   │   ├── Staff/                  # Staff & Shifts (Feature 5)
+│   │   ├── Expenses/               # Operational Expenses (Feature 6 - Owner only)
+│   │   ├── Reports/                # Financial Reports (Feature 7 - Owner only)
+│   │   ├── Store/                  # Internal Store & POS (Feature 8)
+│   │   ├── Equipment/              # Equipment & Maintenance (Feature 9)
+│   │   ├── Reminders/              # Admin Reminders (Feature 10)
+│   │   └── Login/Login.jsx         # Authentication screen (Feature 0)
+│   ├── Routers/                    # Application Routing
+│   │   └── Routers.jsx             # React Router DOM configuration with lazy loading
+│   ├── Service/                    # RTK Query & State Store
+│   │   ├── baseApi.js              # Base query, headers, tagTypes, 401 reauth interceptor
+│   │   ├── Store.jsx               # Redux configureStore
+│   │   └── Apis/                   # Separated API service file per feature
+│   │       ├── authApi.js          # Feature 0: login, refresh, logout
+│   │       ├── membersApi.js       # Feature 1: members & plans CRUD, subscriptions
+│   │       ├── attendanceApi.js    # Feature 2: check-in, today list, offline sync
+│   │       ├── communicationApi.js # Feature 3: segments, WhatsApp templates
+│   │       ├── dashboardApi.js     # Feature 4: dashboard stats
+│   │       ├── staffApi.js         # Feature 5: staff, shifts, staff attendance
+│   │       ├── expensesApi.js      # Feature 6: operational expenses
+│   │       ├── reportsApi.js       # Feature 7: financial summary report
+│   │       ├── storeApi.js         # Feature 8: store products, POS sales
+│   │       ├── equipmentApi.js     # Feature 9: machines, maintenance schedules
+│   │       └── remindersApi.js     # Feature 10: administrative reminders
+│   ├── i18n/                       # Localization dictionaries
+│   │   └── locales/
+│   │       ├── en.json             # English translation strings
+│   │       └── ar.json             # Arabic translation strings
+│   ├── utils/                      # Helper Utilities
+│   │   ├── constants.js            # User roles, categories, statuses
+│   │   ├── formatters.js           # Currency, date, and time formatters
+│   │   ├── storage.js              # Offline queue helper with local_id
+│   │   └── whatsapp.js             # wa.me Click-to-Chat URL builder
+│   ├── App.jsx                     # Root application component mounting Routers
+│   ├── index.css                   # Tailwind v4 directives, Mantine CSS, RTL fonts
+│   └── main.jsx                    # Root provider hierarchy (Redux, Auth, Theme, Language, Mantine)
+├── index.html                      # HTML template with Google Fonts (Cairo & Inter)
+├── tailwind.config.js              # Custom color palette matching Alegny config keys
+├── vite.config.js                  # Vite configuration
+└── package.json
+```
+
+---
+
+## 4. Getting Started & Installation
+
+### Prerequisites
+- **Node.js**: v18.0.0 or higher
+- **npm**: v9.0.0 or higher
+
+### 1. Clone & Install
+```bash
+git clone https://github.com/devnova-team/Gym_managment_system_F.git
+cd Gym_managment_system_F
+npm install
+```
+
+### 2. Configure Environment Variables
+Create a `.env` file in the root directory:
+```env
+VITE_API_BASE_URL=http://localhost:8000/api
+```
+
+### 3. Run Development Server
+```bash
+npm run dev
+```
+The server will start at `http://localhost:3000`.
+
+### 4. Build for Production
+```bash
+npm run build
+```
+
+---
+
+## 5. Dark Mode, Light Mode & RTL Localization
+
+### 🎨 Theme Management (`ThemeContext.jsx`)
+- Toggling dark/light mode automatically synchronizes:
+  1. Tailwind CSS `dark` class on `document.documentElement`.
+  2. Mantine UI `data-mantine-color-scheme` attribute.
+  3. `localStorage.getItem('theme')`.
+- Usage in any component:
+  ```jsx
+  import { useTheme } from '../Context/ThemeContext';
+  const { isDarkMode, toggleTheme } = useTheme();
+  ```
+
+### 🌐 Arabic (RTL) & English (LTR) Localization (`LanguageContext.jsx`)
+- Language selection dynamically switches between `ar` and `en`.
+- Automatically sets `document.documentElement.dir = 'rtl'` or `'ltr'`.
+- Applies Google's **Cairo** font for Arabic and **Inter** for English.
+- Usage:
+  ```jsx
+  import { useLanguage } from '../Context/LanguageContext';
+  import { useTranslation } from 'react-i18next';
+
+  const { language, changeLanguage } = useLanguage();
+  const { t } = useTranslation();
+  ```
+
+---
+
+## 6. Navigation Architecture (NavBar & SharedTabs)
+
+### 📌 Top Header (`Header/NavBar.jsx`)
+- **Left**: Mobile menu toggle (`HiMenuAlt2`) and user greeting with waving hand icon.
+- **Center**: Debounced `SearchInput` component with clear button (`HiXMark`).
+- **Right**:
+  - Language toggle button with Tooltip (`RiGlobalLine`).
+  - Dark / Light mode toggle button with Tooltip (`MdOutlineLightMode` / `MdOutlineDarkMode`).
+  - User avatar with dropdown menu (Profile role indicator, Log Out action with `useLogoutMutation`).
+
+### 📌 Shared Menu Tabs (`Menu/SharedTabs.jsx`)
+- Implemented with Mantine's `<Tabs />` component with custom pills styling.
+- Responsive orientation: vertical for desktop sidebar, horizontal for compact views.
+- Active tab pill indicator with text gradient and icons.
+- Desktop sidebar collapse button (`IoIosArrowBack`) with automatic rotation based on RTL / LTR direction.
+
+---
+
+## 7. State Management & RTK Query Architecture
+
+Data fetching and caching use **Redux Toolkit (RTK Query)** configured in `Service/`:
+
+1. **`Service/baseApi.js`**:
+   - Central `createApi` instance with `baseQueryWithReauth`.
+   - Automatically attaches `Authorization: Bearer <token>` from Cookies/LocalStorage.
+   - Attaches `Accept: application/json` and `Accept-Language: ar|en`.
+   - Intercepts `401 Unauthorized` responses to seamlessly refresh the Access Token via `/api/auth/refresh`.
+   - Defines cache `tagTypes` for cache invalidation.
+
+2. **`Service/Apis/` (Separated API per Feature)**:
+   - Every feature injects its own endpoints into `baseApi`:
+     ```js
+     import { baseApi } from '../baseApi';
+
+     export const featureApi = baseApi.injectEndpoints({
+         endpoints: (builder) => ({
+             // Queries and mutations here
+         }),
+     });
+     export const { use...Query, use...Mutation } = featureApi;
+     ```
+
+3. **`Service/Store.jsx`**:
+   - Single Redux store registering `baseApi.reducer` and `baseApi.middleware`.
+
+---
+
+## 8. Official API Contract & Endpoint Catalog
+
+Based on the official GMS API Contract specification:
+
+### 🔹 Feature 0 — Authentication (`authApi.js`)
+- `POST /api/auth/login`: Authenticate with email/phone + password. Returns Access Token, session cookie, user role (`owner` / `receptionist`), and `gym_id`.
+- `POST /api/auth/refresh`: Refresh expired Access Token using HttpOnly Refresh Cookie.
+- `POST /api/auth/logout`: Invalidate session on backend.
+
+### 🔹 Feature 1 — Members & Subscriptions (`membersApi.js`)
+- `GET /api/members`: Fetch member list with search and filters.
+- `POST /api/members`: Register new member (name, phone, birth date, photo).
+- `GET /api/members/{id}`: Member profile details.
+- `PUT /api/members/{id}`: Update member profile.
+- `DELETE /api/members/{id}`: Soft delete member.
+- `GET /api/plans`: Fetch available subscription plans.
+- `POST /api/plans`: Create new plan (*Owner only*).
+- `PUT /api/plans/{id}`: Edit plan.
+- `DELETE /api/plans/{id}`: Delete plan (*rejected if linked to active subscriptions*).
+- `POST /api/subscriptions`: Add new subscription for member (*payment_method is fixed to 'cash'*).
+- `POST /api/subscriptions/renew`: Renew subscription (*supports early renewal from old expiry date*).
+
+### 🔹 Feature 2 — Attendance & Check-in (`attendanceApi.js`)
+- `POST /api/attendance/check-in`: Manual member check-in with subscription validation.
+- `GET /api/attendance/today`: List members currently inside the gym today.
+- `POST /api/attendance/sync`: Sync offline records recorded during internet outage (*idempotent using unique local_id*).
+
+### 🔹 Feature 3 — Segmentation & Communication (`communicationApi.js`)
+- `GET /api/members/segmented`: Get members grouped into 4 categories (`new`, `expiring`, `inactive`, `expired`) with pre-filled WhatsApp `wa.me` links.
+- `GET /api/message-templates`: Fetch templates for each segment.
+- `PUT /api/message-templates/{id}`: Edit template message text (*Owner only*).
+
+### 🔹 Feature 4 — Dashboard Stats (`dashboardApi.js`)
+- `GET /api/dashboard/stats`: KPI metrics, 4 segment counters, and attendance chart data in a single request.
+
+### 🔹 Feature 5 — Staff & Shifts (`staffApi.js`)
+- `GET /api/staff`: List staff members (owner, receptionist, trainer).
+- `POST /api/staff`: Register new staff member.
+- `GET /api/shifts`: List shift schedules.
+- `POST /api/shifts`: Create shift schedule.
+- `POST /api/staff/attendance`: Staff clock in / clock out (*separated from member attendance*).
+
+### 🔹 Feature 6 — Operational Expenses (`expensesApi.js`)
+- `GET /api/expenses`: List and filter expenses (*rent, salaries, bills, maintenance, other*).
+- `POST /api/expenses`: Record operational expense.
+
+### 🔹 Feature 7 — Financial Report (`reportsApi.js`)
+- `GET /api/reports/financial-summary`: Comprehensive financial summary (*Owner only*):
+  $$\text{Net Profit} = \text{Cash Subscriptions} + \text{Store Sales} - \text{Expenses}$$
+
+### 🔹 Feature 8 — Internal Store / POS (`storeApi.js`)
+- `GET /api/store/products`: List products, unit prices, and stock inventory.
+- `POST /api/store/products`: Add product to store.
+- `POST /api/store/sales`: Record sale with automatic stock deduction (*guards against out-of-stock items*).
+
+### 🔹 Feature 9 — Equipment & Maintenance (`equipmentApi.js`)
+- `GET /api/equipment`: Equipment registry with maintenance schedules.
+- `POST /api/equipment`: Add machine/equipment.
+- `PUT /api/equipment/{id}`: Update equipment or maintenance records.
+
+### 🔹 Feature 10 — Administrative Reminders (`remindersApi.js`)
+- `GET /api/reminders`: List administrative tasks and reminders.
+- `POST /api/reminders`: Create administrative reminder.
+
+---
+
+## 9. Team Division & Sprint Breakdown
+
+| Team Member | Area of Responsibility | Features Assigned |
+| :--- | :--- | :--- |
+| **Youssef** | **Core & Members** | Feature 0 (Auth) & Feature 1 (Members & Plans) |
+| **Mariam** | **Operations & Engagement** | Feature 2 (Attendance) & Feature 3 (Segments & Messaging) |
+| **Moamen** | **Finance & Analytics** | Feature 4 (Dashboard), Feature 6 (Expenses), Feature 7 (Reports) |
+| **Mohamed** | **Staff, Store & Facilities** | Feature 5 (Staff), Feature 8 (Store), Feature 9 (Equipment), Feature 10 (Reminders) |
+
+---
+
+## 10. Multi-Tenancy & Data Isolation
+
+FitPulse is a SaaS platform serving multiple gyms simultaneously:
+- Every database query and cache key is automatically scoped by `gym_id`.
+- The backend infers `gym_id` from the verified JWT access token.
+- No user can access or view another gym's data.
+
+---
+
+## 11. Git Workflow & Collaboration Rules
+
+### Branching Model
+- **`main`**: Production release only. Direct commits are forbidden.
+- **`staging`**: Integration and team testing branch.
+- **`feature/<name>/feature-<number>`**: Feature branches branched from `staging`.
+
+```bash
+# Update staging
 git checkout staging
 git pull origin staging
-git checkout -b <name>/feature-<number>
 
-# تنفيذ التعديلات
+# Create feature branch
+git checkout -b youssef/feature-1
 
+# Commit & Push
 git add .
-git commit -m "Implement feature"
-git push origin <name>/feature-<number>
+git commit -m "feat(members): implement member CRUD and plan association"
+git push origin youssef/feature-1
+```
 
+---
 
-
-بعد ذلك:
-
-1.
-فتح Pull Request من Feature Branch إلى staging.
-
-2.
-كتابة ملخص للتغيير وطريقة الاختبار.
-
-3.
-انتظار Code Review.
-
-4.
-إصلاح الملاحظات إن وجدت.
-
-5.
-الدمج على staging بعد الموافقة.
-
-6.
-اختبار QA/UAT.
-
-7.
-فتح PR من staging إلى main بعد اعتماد النسخة.
-
-
-لا يتم الدمج مباشرة إلى main أو staging بدون Pull Request ومراجعة.
-
-
-
-
-11. خطة التنفيذ خلال أسبوعين
-
-الأسبوع الأول — Foundation & Initial Implementation
-
-الفريق
-
-•
-تثبيت main وstaging.
-
-•
-اعتماد Database Schema.
-
-•
-اعتماد API Contract.
-
-•
-تجهيز Layout وRTL والمكونات المشتركة.
-
-•
-تجهيز Mock Data عند الحاجة.
-
-يوسف
-
-•
-Login وJWT وRefresh Token.
-
-•
-Owner/Receptionist Role Guards.
-
-•
-بداية Members CRUD.
-
-•
-Plans وSubscriptions والدفع Cash.
-
-مريم
-
-•
-Quick Check-in.
-
-•
-شاشة الموجودين حاليًا.
-
-•
-last_attendance.
-
-•
-تصميم Offline Sync.
-
-•
-منطق التصنيفات وقوالب الرسائل.
-
-مؤمن
-
-•
-Dashboard KPI Cards.
-
-•
-Segment Counters والشارتات.
-
-•
-Expenses CRUD والتصنيفات.
-
-•
-تعريف معادلة التقرير المالي.
-
-محمد
-
-•
-Staff وRoles.
-
-•
-Shifts وStaff Attendance.
-
-•
-Products وStore Sales.
-
-•
-Equipment وMaintenance.
-
-•
-Admin Reminders.
-
-الأسبوع الثاني — Integration, Testing & Release
-
-الفريق
-
-•
-ربط الواجهات بالـ APIs الحقيقية.
-
-•
-استكمال المكونات الناقصة.
-
-•
-اختبار المسارات الكاملة.
-
-•
-إصلاح مشاكل التكامل.
-
-•
-QA/UAT.
-
-•
-تجهيز PR من staging إلى main.
-
-يوسف
-
-•
-اختبار كامل للمصادقة والصلاحيات.
-
-•
-إكمال الأعضاء والاشتراكات والـ Soft Delete.
-
-•
-مراجعة عزل البيانات.
-
-مريم
-
-•
-ربط الحضور بالأعضاء والاشتراكات.
-
-•
-إكمال Offline Sync ومنع التكرار.
-
-•
-اختبار كل فئات التصنيف وروابط WhatsApp.
-
-مؤمن
-
-•
-ربط الداشبورد بالبيانات الحقيقية.
-
-•
-ربط المصروفات بالتقرير.
-
-•
-ربط اشتراكات Cash ومبيعات المتجر.
-
-•
-اختبار صافي الربح والفلاتر الزمنية.
-
-محمد
-
-•
-ربط الموظفين والشيفتات.
-
-•
-إكمال البيع وخصم المخزون.
-
-•
-إكمال المعدات والتذكيرات.
-
-•
-اختبار حالات نفاد المخزون والصيانة المستحقة.
-
-
-
-
-12. Definition of Done
-
-لا تعتبر المهمة مكتملة إلا عند تحقق الآتي:
-
-•
-الـ Feature تعمل وفق الـ Acceptance Criteria.
-
-•
-الكود موجود على Feature Branch.
-
-•
-تم اتباع الـ API Contract والـ Schema.
-
-•
-تم دعم RTL عند الحاجة.
-
-•
-تم تنفيذ Validation.
-
-•
-تم التعامل مع Loading وSuccess وError وEmpty وDisabled.
-
-•
-تم اختبار السيناريو الأساسي والحالات الحدية.
-
-•
-لا توجد أخطاء واضحة في Console.
-
-•
-تم فتح Pull Request إلى staging.
-
-•
-تمت مراجعة الكود وإصلاح الملاحظات.
-
-•
-نجح QA/UAT.
-
-•
-تم تحديث مهمة ClickUp وإغلاقها بعد الاعتماد.
-
-
-
-
-13. QA Checklist
-
-Authentication
-
-
-
-
-Login صحيح.
-
-
-
-
-Login خاطئ.
-
-
-
-
-Refresh Token.
-
-
-
-
-Logout.
-
-
-
-
-Owner permissions.
-
-
-
-
-Receptionist permissions.
-
-
-
-
-منع الوصول بدون Token.
-
-Members & Subscriptions
-
-
-
-
-إنشاء عضو.
-
-
-
-
-تعديل عضو.
-
-
-
-
-Soft Delete.
-
-
-
-
-إنشاء باقة.
-
-
-
-
-إنشاء اشتراك.
-
-
-
-
-تجديد اشتراك.
-
-
-
-
-الدفع Cash.
-
-
-
-
-تاريخ انتهاء صحيح.
-
-Attendance
-
-
-
-
-حضور عضو باشتراك ساري.
-
-
-
-
-رفض حضور عضو منتهي.
-
-
-
-
-شاشة الموجودين اليوم.
-
-
-
-
-Offline Sync.
-
-
-
-
-منع التكرار باستخدام local_id.
-
-Classification & Communication
-
-
-
-
-عضو جديد.
-
-
-
-
-اشتراك قريب الانتهاء.
-
-
-
-
-عضو مختفي.
-
-
-
-
-اشتراك منتهي.
-
-
-
-
-قالب رسالة صحيح.
-
-
-
-
-رابط WhatsApp صحيح.
-
-Finance & Store
-
-
-
-
-إضافة مصروف.
-
-
-
-
-تصنيف المصروف.
-
-
-
-
-إضافة منتج.
-
-
-
-
-بيع منتج.
-
-
-
-
-خصم المخزون.
-
-
-
-
-منع البيع عند نفاد الكمية.
-
-
-
-
-حساب صافي الربح.
-
-Staff & Facilities
-
-
-
-
-إضافة موظف.
-
-
-
-
-إنشاء شيفت.
-
-
-
-
-حضور وانصراف الموظف.
-
-
-
-
-إضافة معدة.
-
-
-
-
-حساب الصيانة القادمة.
-
-
-
-
-إنشاء تذكير إداري.
-
-
-
-
-14. ClickUp Structure
-
-القائمة
-
-Gym Management System - MVP
-
-المهام الأساسية
-
-•
-00 - Project Setup & Git Workflow
-
-•
-00 - Database Schema
-
-•
-00 - API Contract
-
-•
-00 - Shared UI Setup
-
-•
-Member 1 - Core & Members
-
-•
-Member 2 - Operations & Engagement
-
-•
-Member 3 - Finance & Analytics
-
-•
-Member 4 - Staff, Store & Facilities
-
-حالات المهام المقترحة
-
-•
-To Do
-
-•
-In Progress
-
-•
-Code Review
-
-•
-Changes Requested
-
-•
-QA / Testing
-
-•
-Done
-
-•
-Blocked
-
-ربط المهام
-
-•
-Database Schema قبل كل الـ Features.
-
-•
-API Contract قبل ربط الواجهات.
-
-•
-Authentication قبل الأعضاء والحضور والمصروفات.
-
-•
-Members & Subscriptions قبل Attendance وClassification.
-
-•
-Store وExpenses قبل التقرير المالي النهائي.
-
-•
-جميع الـ Features قبل Integration وQA/UAT.
-
-
-
-
-15. المخاطر والافتراضات
-
-•
-يتم استخدام Cash فقط في الـ MVP ولا يوجد Payment Gateway.
-
-•
-WhatsApp يتم من خلال Click-to-Chat وليس إرسالًا آليًا.
-
-•
-Offline Sync مخصص للحضور مع local_id لمنع التكرار.
-
-•
-QR Check-in اختياري حسب قرار الفريق.
-
-•
-أسماء أعضاء الفريق تستخدم للتوزيع في ClickUp بعد إضافتهم إلى Workspace.
-
-•
-الخطة ذات الأسبوعين مكثفة وتحتاج التزامًا يوميًا ودمجًا مبكرًا.
-
-•
-أي Feature تعتمد على Feature أخرى يجب أن تستخدم Mock Data مؤقتًا إذا كان ذلك لا يعطل التنفيذ.
-
-
-
-
-16. النتيجة المتوقعة
-
-بنهاية الأسبوعين يجب أن تكون نسخة MVP:
-
-•
-تحتوي على Features من 0 إلى 10.
-
-•
-تعمل بعزل كامل لبيانات كل جيم.
-
-•
-تدعم Owner وReceptionist.
-
-•
-تدير الأعضاء والاشتراكات والحضور والتواصل.
-
-•
-تعرض الداشبورد والتقارير المالية.
-
-•
-تدير الموظفين والمتجر والمعدات والتذكيرات.
-
-•
-تدعم RTL وحالات الواجهة الأساسية.
-
-•
-مرت بمراجعة كود واختبار QA/UAT.
-
-•
-جاهزة للدمج من staging إلى main بعد الاعتماد.
-
+*FitPulse GMS • Powered by DevNova Team • 2026*
