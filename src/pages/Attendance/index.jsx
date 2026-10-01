@@ -6,10 +6,14 @@ import { FiCheckCircle, FiUsers } from 'react-icons/fi';
 import { HiExclamationTriangle } from 'react-icons/hi2';
 import SearchInput from '../../components/SearchInput';
 import TableSkeleton from '../../components/Tables/TableSkeleton';
-import { useCheckInMutation, useGetTodayAttendanceQuery, useSyncOfflineAttendanceMutation } from '../../Service/Apis/attendanceApi';
-import { useGetMembersQuery } from '../../Service/Apis/membersApi';
-import { mockMembers } from '../../data/mockAttendance';
-import { addToOfflineQueue, clearOfflineQueue, getOfflineQueue } from '../../utils/storage';
+import { mockAttendanceRecords, mockMembers } from '../../data/mockAttendance';
+import {
+    generateIdLocal,
+    getPendingAttendance,
+    getSyncedHistory,
+    queueAttendanceRecord,
+    syncPendingQueue,
+} from '../../Service/attendanceSyncMock';
 import { formatTime } from '../../utils/formatters';
 
 const USE_MOCK_ATTENDANCE = true;
@@ -71,6 +75,25 @@ const getCheckInTime = (record) => {
     return record?.check_in_time || record?.checkInTime || record?.created_at || record?.createdAt || null;
 };
 
+const isNetworkFailure = (error) => {
+    if (!error) return false;
+
+    const status = error?.status;
+    const message = String(error?.error || error?.message || '').toLowerCase();
+
+    return (
+        status === 'FETCH_ERROR' ||
+        status === 'ERR_NETWORK' ||
+        status === 0 ||
+        error?.code === 'ERR_NETWORK' ||
+        error?.name === 'TypeError' ||
+        message.includes('failed to fetch') ||
+        message.includes('network') ||
+        message.includes('connection') ||
+        (!navigator.onLine && ![401, 403, 422].includes(Number(status)))
+    );
+};
+
 const extractErrorMessage = (error, t) => {
     if (!error) return t('common.errorOccurred');
 
@@ -120,121 +143,165 @@ const Attendance = () => {
     const locale = language?.toLowerCase().startsWith('ar') ? 'ar-EG' : 'en-US';
     const [search, setSearch] = useState('');
     const [selectedMember, setSelectedMember] = useState(null);
+    const [mockMemberState, setMockMemberState] = useState(mockMembers);
     const [notice, setNotice] = useState(null);
     const [isSubmittingCheckIn, setIsSubmittingCheckIn] = useState(false);
-    const [pendingSyncState, setPendingSyncState] = useState(getOfflineQueue().length > 0);
-    const [mockMemberState, setMockMemberState] = useState(mockMembers);
+    const [pendingRecords, setPendingRecords] = useState(() => getPendingAttendance());
+    const [syncedHistory, setSyncedHistory] = useState(() => getSyncedHistory());
+    const [isOnline, setIsOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
+    const [syncState, setSyncState] = useState({
+        status: 'idle',
+        pendingCount: 0,
+        lastSyncAt: null,
+        error: null,
+        syncedCount: 0,
+        totalCount: 0,
+    });
 
     const [debouncedSearch] = useDebouncedValue(search, 350);
 
-    const { data: membersResponse, isFetching: isSearchingMembers, error: membersError } = useGetMembersQuery(
-        { search: debouncedSearch.trim() },
-        { skip: USE_MOCK_ATTENDANCE || !debouncedSearch.trim() }
-    );
-    const { data: attendanceResponse, isLoading: isApiLoadingAttendance, error: attendanceError, refetch: refetchAttendance } = useGetTodayAttendanceQuery(undefined, {
-        skip: USE_MOCK_ATTENDANCE,
-    });
-    const [checkInMutation] = useCheckInMutation();
-    const [syncOfflineAttendance] = useSyncOfflineAttendanceMutation();
+    const refreshPendingQueue = useCallback(() => {
+        const queue = getPendingAttendance();
+        setPendingRecords(queue);
+        setSyncState((current) => ({
+            ...current,
+            pendingCount: queue.length,
+            totalCount: Math.max(current.totalCount || queue.length, queue.length),
+        }));
+        return queue;
+    }, []);
+
+    const syncPendingMockRecords = useCallback(async (failIds = []) => {
+        const queue = getPendingAttendance();
+        if (!queue.length) {
+            setSyncState((current) => ({ ...current, status: 'idle', pendingCount: 0, error: null }));
+            return;
+        }
+
+        setSyncState((current) => ({
+            ...current,
+            status: 'syncing',
+            error: null,
+            pendingCount: queue.length,
+        }));
+
+        const result = await syncPendingQueue({ failIds });
+        const nextPending = result.remaining || [];
+        const nextSyncState = {
+            status: result.success ? 'synced' : 'failed',
+            pendingCount: nextPending.length,
+            lastSyncAt: new Date().toISOString(),
+            error: result.failedRecords?.length ? 'Some attendance records could not be synchronized.' : null,
+            syncedCount: result.syncedRecords?.length || 0,
+            totalCount: result.total || queue.length,
+        };
+
+        setPendingRecords(nextPending);
+        setSyncedHistory(getSyncedHistory());
+        setSyncState(nextSyncState);
+
+        if (result.success && result.syncedRecords?.length) {
+            setNotice({ type: 'success', message: 'Attendance synced successfully' });
+        } else if (result.failedRecords?.length) {
+            setNotice({ type: 'error', message: 'Some attendance records could not be synchronized. They will be retried.' });
+        }
+    }, []);
+
+    useEffect(() => {
+        const syncWhenOnline = () => {
+            const online = typeof navigator !== 'undefined' ? navigator.onLine : true;
+            setIsOnline(online);
+
+            if (online) {
+                syncPendingMockRecords();
+            }
+        };
+
+        syncWhenOnline();
+        window.addEventListener('online', syncWhenOnline);
+        window.addEventListener('offline', () => setIsOnline(false));
+
+        return () => {
+            window.removeEventListener('online', syncWhenOnline);
+            window.removeEventListener('offline', () => setIsOnline(false));
+        };
+    }, [syncPendingMockRecords]);
+
+    useEffect(() => {
+        refreshPendingQueue();
+    }, [refreshPendingQueue]);
 
     const members = useMemo(() => {
         const searchTerm = debouncedSearch.trim().toLowerCase();
-        const list = USE_MOCK_ATTENDANCE
-            ? mockMemberState
-                .filter((member) => `${member.name} ${member.nameAr} ${member.phone}`.toLowerCase().includes(searchTerm))
-                .map((member) => ({ member }))
-            : normalizeList(membersResponse);
-        return list.filter((member) => {
-            const meta = getLocalizedMemberMeta(member, t, language);
-            return !!meta.name;
-        });
-    }, [debouncedSearch, i18n.language, i18n.resolvedLanguage, membersResponse, mockMemberState, t, language]);
+        return mockMemberState
+            .filter((member) => `${member.name} ${member.nameAr} ${member.phone}`.toLowerCase().includes(searchTerm))
+            .map((member) => ({ member }));
+    }, [debouncedSearch, mockMemberState]);
 
-    const realAttendanceList = useMemo(() => {
-        const list = normalizeList(attendanceResponse);
-        return list.map((record) => {
-            const memberMeta = getLocalizedMemberMeta(record, t, language);
-            return {
-                ...record,
-                id: record.id ?? record.local_id ?? record.member_id ?? memberMeta.id,
-                member: memberMeta,
-                checkInTime: getCheckInTime(record),
-            };
-        });
-    }, [attendanceResponse, language, t]);
+    const attendanceList = useMemo(() => {
+        const pendingRows = pendingRecords.map((record) => ({
+            id: record.id_local,
+            memberId: record.memberId,
+            memberName: record.memberName,
+            checkInTime: record.checkInTime,
+            status: record.status === 'failed' ? 'Sync Failed' : record.status === 'pending' ? 'Pending Sync' : 'Synced',
+            member: {
+                id: record.memberId,
+                name: record.memberName,
+                nameAr: record.memberName,
+                phone: '',
+                photo: null,
+            },
+        }));
 
-    const attendanceList = USE_MOCK_ATTENDANCE
-        ? mockMemberState
-            .filter((member) => member.attendanceStatus === 'present' || member.attendanceStatus === 'late')
-            .map((member) => ({ ...member, member }))
-        : realAttendanceList;
-    const isLoadingAttendance = USE_MOCK_ATTENDANCE ? false : isApiLoadingAttendance;
-    const presentCount = USE_MOCK_ATTENDANCE
-        ? mockMemberState.filter((member) => member.attendanceStatus === 'present' || member.attendanceStatus === 'late').length
-        : attendanceList.length;
+        const historyRows = syncedHistory.map((record) => ({
+            id: record.id_local,
+            memberId: record.memberId,
+            memberName: record.memberName,
+            checkInTime: record.checkInTime,
+            status: 'Synced',
+            member: {
+                id: record.memberId,
+                name: record.memberName,
+                nameAr: record.memberName,
+                phone: '',
+                photo: null,
+            },
+        }));
+
+        return [...mockAttendanceRecords, ...pendingRows, ...historyRows].map((record) => ({
+            ...record,
+            member: {
+                ...(record.member || {}),
+                phone: mockMemberState.find((member) => String(member.id) === String(record.memberId))?.phone || '',
+                photo: mockMemberState.find((member) => String(member.id) === String(record.memberId))?.photo || null,
+            },
+            attendanceStatus: record.status === 'Pending Sync' ? 'present' : record.status === 'Sync Failed' ? 'late' : 'present',
+        }));
+    }, [mockMemberState, pendingRecords, syncedHistory]);
+
+    const presentCount = attendanceList.length;
     const selectedMemberId = selectedMember ? getMemberMeta(selectedMember, t).id : null;
-    const currentSelectedMember = USE_MOCK_ATTENDANCE
-        ? mockMemberState.find((member) => member.id === selectedMemberId)
-        : selectedMember;
+    const currentSelectedMember = selectedMember;
     const selectedMemberInfo = currentSelectedMember
         ? getLocalizedMemberMeta(currentSelectedMember, t, language)
         : null;
 
-    const handleAttendanceStatusChange = (attendanceStatus) => {
-        if (!USE_MOCK_ATTENDANCE || !selectedMemberInfo) return;
+    const handleAttendanceStatusChange = (status) => {
+        if (!selectedMemberInfo?.id) return;
 
-        setMockMemberState((currentMembers) => currentMembers.map((member) => {
-            if (member.id !== selectedMemberInfo.id) return member;
-
-            return {
-                ...member,
-                attendanceStatus,
-                checkInTime: attendanceStatus === 'not_coming'
-                    ? null
-                    : member.checkInTime || new Date().toISOString(),
-            };
-        }));
+        setMockMemberState((current) => current.map((member) => (
+            String(member.id) === String(selectedMemberInfo.id)
+                ? { ...member, attendanceStatus: status }
+                : member
+        )));
     };
-
-    const syncPendingRecords = useCallback(async () => {
-        const queue = getOfflineQueue();
-        if (!queue.length || !navigator.onLine) return;
-
-        try {
-            await syncOfflineAttendance({ records: queue }).unwrap();
-            clearOfflineQueue();
-            setPendingSyncState(false);
-            setNotice({ type: 'success', key: 'attendance.syncSuccess' });
-            if (!USE_MOCK_ATTENDANCE) await refetchAttendance();
-        } catch (syncError) {
-            setPendingSyncState(true);
-            setNotice({
-                type: 'error',
-                error: syncError,
-            });
-        }
-    }, [refetchAttendance, syncOfflineAttendance, t]);
-
-    useEffect(() => {
-        if (navigator.onLine) {
-            syncPendingRecords();
-        }
-    }, [syncPendingRecords]);
-
-    useEffect(() => {
-        const handleOnline = () => {
-            syncPendingRecords();
-        };
-
-        window.addEventListener('online', handleOnline);
-        return () => window.removeEventListener('online', handleOnline);
-    }, [syncPendingRecords]);
 
     const handleCheckIn = async () => {
         if (!selectedMember) {
             setNotice({
                 type: 'error',
-                key: 'attendance.selectMemberError',
+                message: 'Please select a member first.',
             });
             return;
         }
@@ -243,93 +310,83 @@ const Attendance = () => {
         if (!memberId) {
             setNotice({
                 type: 'error',
-                key: 'attendance.invalidMember',
+                message: 'Please select a member first.',
             });
             return;
         }
-        if (USE_MOCK_ATTENDANCE) return;
+
+        const alreadyCheckedIn = [...mockAttendanceRecords, ...pendingRecords, ...syncedHistory].some((record) => {
+            const sameMember = String(record.memberId ?? record.member_id) === String(memberId);
+            const recordTime = record.checkInTime || record.createdAt;
+            if (!sameMember || !recordTime) return false;
+            const recordDate = new Date(recordTime);
+            const now = new Date();
+            return recordDate.getFullYear() === now.getFullYear()
+                && recordDate.getMonth() === now.getMonth()
+                && recordDate.getDate() === now.getDate();
+        });
+
+        if (alreadyCheckedIn) {
+            setNotice({
+                type: 'error',
+                message: 'This member is already checked in today.',
+            });
+            return;
+        }
 
         setIsSubmittingCheckIn(true);
 
-        try {
-            if (!navigator.onLine) {
-                const queuedRecord = addToOfflineQueue({
-                    member_id: memberId,
-                    member: selectedMember,
-                    check_in_time: new Date().toISOString(),
-                    local_id: `offline_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`,
-                });
+        await new Promise((resolve) => setTimeout(resolve, 600));
 
-                setPendingSyncState(true);
-                setNotice({
-                    type: 'info',
-                    key: 'attendance.offlineQueued',
-                    values: { id: queuedRecord.local_id },
-                });
-                setSelectedMember(null);
-                setSearch('');
-                return;
-            }
+        const checkInTime = new Date().toISOString();
+        const queuedRecord = queueAttendanceRecord({
+            id_local: generateIdLocal(),
+            memberId,
+            memberName: selectedMemberInfo?.name || selectedMember?.name || 'Member',
+            checkInTime,
+            status: 'pending',
+            syncAttempts: 0,
+            createdAt: checkInTime,
+        });
 
-            const result = await checkInMutation({ member_id: memberId }).unwrap();
-            const payloadData = normalizeList(result?.data || result);
-            const createdRecord = payloadData[0] || result?.data || result?.attendance || result;
+        setPendingRecords(getPendingAttendance());
+        setSyncState((current) => ({
+            ...current,
+            status: 'idle',
+            pendingCount: getPendingAttendance().length,
+            totalCount: Math.max(current.totalCount || 0, getPendingAttendance().length),
+        }));
+        setNotice({
+            type: 'success',
+            message: 'Check-in saved and waiting for synchronization.',
+        });
+        setSelectedMember(null);
+        setSearch('');
+        setIsSubmittingCheckIn(false);
 
-            if (createdRecord && typeof createdRecord === 'object') {
-                const memberMeta = getLocalizedMemberMeta(createdRecord, t, language);
-                const checkInTime = getCheckInTime(createdRecord);
-                setNotice({
-                    type: 'success',
-                    key: 'attendance.checkInSuccess',
-                    values: { name: memberMeta.name, nameAr: memberMeta.nameAr, checkInTime },
-                });
-            } else {
-                setNotice({
-                    type: 'success',
-                    key: 'attendance.checkedInName',
-                    values: { name: selectedMemberInfo.name },
-                });
-            }
-
-            setSelectedMember(null);
-            setSearch('');
-            if (!USE_MOCK_ATTENDANCE) await refetchAttendance();
-        } catch (error) {
-            setNotice({ type: 'error', error });
-        } finally {
-            setIsSubmittingCheckIn(false);
+        if (navigator.onLine) {
+            setNotice({
+                type: 'success',
+                message: `Check-in saved and waiting for synchronization. Id: ${queuedRecord.id_local}`,
+            });
         }
     };
 
-    const attendanceErrorMessage = USE_MOCK_ATTENDANCE
-        ? ''
-        : attendanceError
-            ? extractErrorMessage(attendanceError, t)
-            : null;
-    const memberSearchErrorMessage = !USE_MOCK_ATTENDANCE && membersError
-        ? extractErrorMessage(membersError, t)
-        : null;
-    const noticeMember = notice?.memberId
-        ? mockMemberState.find((member) => member.id === notice.memberId)
-        : null;
-    const noticeName = noticeMember
-        ? language.toLowerCase().startsWith('ar') && noticeMember.nameAr
-            ? noticeMember.nameAr
-            : noticeMember.name
-        : language.toLowerCase().startsWith('ar') && notice?.values?.nameAr
-            ? notice.values.nameAr
-            : notice?.values?.name;
-    const noticeMessage = notice?.key
-        ? t(notice.key, {
-            ...notice.values,
-            name: noticeName,
-            time: notice?.values?.checkInTime
-                ? formatTime(notice.values.checkInTime, locale)
-                : notice?.values?.time,
-        })
-        : notice?.error
-            ? extractErrorMessage(notice.error, t)
-            : '';
+    const syncBadge = !isOnline
+        ? { color: 'gray', label: 'Offline — attendance will be saved locally' }
+        : syncState.status === 'syncing'
+            ? { color: 'blue', label: 'Syncing attendance...' }
+            : syncState.pendingCount > 0
+                ? { color: 'yellow', label: `Attendance records waiting to sync (${syncState.pendingCount})` }
+                : syncState.status === 'synced'
+                    ? { color: 'green', label: 'Attendance synced successfully' }
+                    : syncState.status === 'failed'
+                        ? { color: 'orange', label: 'Some attendance records could not be synchronized. They will be retried.' }
+                        : { color: 'green', label: 'Online' };
+
+    const attendanceErrorMessage = null;
+    const memberSearchErrorMessage = null;
+    const noticeMessage = notice?.message || '';
 
     const renderApiErrorAlert = (message) => (
         <Alert color="red" variant="light" icon={<HiExclamationTriangle size={18} />}>
@@ -349,15 +406,21 @@ const Attendance = () => {
                     </p>
                 </div>
 
-                <Button
-                    leftSection={<FiUsers size={18} />}
-                    className="bg-btn-gradient hover:bg-btn-gradient rounded-xl px-4 h-11 text-sm font-semibold shadow-sm border-0"
-                    onClick={() => setSelectedMember(members[0])}
-                    disabled={!debouncedSearch.trim() || members.length === 0}
-                    aria-label={t('attendance.addAction')}
-                >
-                    {t('attendance.addAction')}
-                </Button>
+                <div className="flex items-center gap-3">
+                    <Badge color={syncBadge.color} variant="light" radius="sm">
+                        {syncBadge.label}
+                    </Badge>
+
+                    <Button
+                        leftSection={<FiUsers size={18} />}
+                        className="bg-btn-gradient hover:bg-btn-gradient rounded-xl px-4 h-11 text-sm font-semibold shadow-sm border-0"
+                        onClick={() => setSelectedMember(members[0])}
+                        disabled={!debouncedSearch.trim() || members.length === 0}
+                        aria-label={t('attendance.addAction')}
+                    >
+                        {t('attendance.addAction')}
+                    </Button>
+                </div>
             </div>
 
             {notice && (
@@ -381,12 +444,7 @@ const Attendance = () => {
                             </Text>
                             <Text size="xs" c="dimmed">{t('attendance.searchSubtitle')}</Text>
                         </div>
-                        {pendingSyncState && (
-                            <Badge color="yellow" variant="light">
-                                {t('attendance.pendingSync')}
-                            </Badge>
-                        )}
-                    </div>
+                        </div>
 
                     <SearchInput
                         placeholder={t('attendance.searchPrompt')}
@@ -399,25 +457,13 @@ const Attendance = () => {
                         }}
                     />
 
-                    {isSearchingMembers && (
-                        <div className="mt-3 rounded-xl bg-slate-50 dark:bg-slate-900 px-3 py-2 text-xs text-slate-600 dark:text-slate-300">
-                            {t('attendance.memberSearchLoading')}
-                        </div>
-                    )}
-
-                    {memberSearchErrorMessage && (
-                        <div className="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-                            {memberSearchErrorMessage}
-                        </div>
-                    )}
-
                     {!debouncedSearch.trim() && !selectedMember && (
                         <div className="mt-4 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-400">
                             {t('attendance.searchHint')}
                         </div>
                     )}
 
-                    {debouncedSearch.trim() && !isSearchingMembers && members.length > 0 && (
+                    {debouncedSearch.trim() && members.length > 0 && (
                         <div className="mt-4 space-y-2">
                             {members.slice(0, 6).map((member) => {
                                 const memberMeta = getLocalizedMemberMeta(member, t, language);
@@ -452,7 +498,7 @@ const Attendance = () => {
                         </div>
                     )}
 
-                    {debouncedSearch.trim() && !isSearchingMembers && members.length === 0 && !memberSearchErrorMessage && (
+                    {debouncedSearch.trim() && members.length === 0 && (
                         <div className="mt-4 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-400">
                             {t('attendance.noMemberFound')}
                         </div>
@@ -520,11 +566,10 @@ const Attendance = () => {
                                     loading={isSubmittingCheckIn}
                                     loaderProps={{ type: 'dots' }}
                                     onClick={handleCheckIn}
-                                    disabled={USE_MOCK_ATTENDANCE}
                                     className="h-11 rounded-xl bg-btn-gradient text-sm font-semibold"
-                                    aria-label={t(USE_MOCK_ATTENDANCE ? 'attendance.checkedIn' : 'attendance.checkIn')}
+                                    aria-label={t('attendance.checkIn')}
                                 >
-                                    {t(USE_MOCK_ATTENDANCE ? 'attendance.checkedIn' : 'attendance.checkIn')}
+                                    {isSubmittingCheckIn ? 'Checking in...' : t('attendance.checkIn')}
                                 </Button>
                             )}
                         </Stack>
@@ -547,6 +592,24 @@ const Attendance = () => {
                         {presentCount}
                     </div>
                 </div>
+
+                <div className="flex flex-wrap gap-2 text-sm text-slate-600 dark:text-slate-300">
+                    <span>Pending: {syncState.pendingCount}</span>
+                    <span>•</span>
+                    <span>Synced: {syncState.syncedCount}</span>
+                    <span>•</span>
+                    <span>Last Sync: {syncState.lastSyncAt ? new Date(syncState.lastSyncAt).toLocaleTimeString() : '—'}</span>
+                </div>
+
+                <Button
+                    fullWidth
+                    type="button"
+                    className="mt-4 h-11 rounded-xl bg-btn-gradient text-sm font-semibold"
+                    onClick={() => syncPendingMockRecords()}
+                    disabled={syncState.status === 'syncing' || syncState.pendingCount === 0}
+                >
+                    {syncState.status === 'syncing' ? 'Syncing...' : syncState.pendingCount > 0 ? `Sync Attendance (${syncState.pendingCount})` : 'Sync Attendance'}
+                </Button>
             </Card>
 
             <Card className="rounded-2xl border border-slate-200 dark:border-slate-800/80 bg-white dark:bg-[#0e1517] shadow-sm">
@@ -558,20 +621,6 @@ const Attendance = () => {
 
                 {attendanceErrorMessage ? (
                     renderApiErrorAlert(attendanceErrorMessage)
-                ) : isLoadingAttendance ? (
-                    <Table.ScrollContainer minWidth={600}>
-                        <Table>
-                            <Table.Thead>
-                                <Table.Tr>
-                                    <Table.Th>{t('attendance.memberName')}</Table.Th>
-                                    <Table.Th>{t('attendance.phone')}</Table.Th>
-                                    <Table.Th>{t('attendance.checkInTime')}</Table.Th>
-                                    <Table.Th>{t('attendance.status')}</Table.Th>
-                                </Table.Tr>
-                            </Table.Thead>
-                            <TableSkeleton colCount={4} rowCount={5} />
-                        </Table>
-                    </Table.ScrollContainer>
                 ) : attendanceList.length === 0 ? (
                     <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center dark:border-slate-700 dark:bg-slate-900/50">
                         <Text fw={600} className="text-slate-700 dark:text-slate-200">
@@ -594,9 +643,9 @@ const Attendance = () => {
                             </Table.Thead>
                             <Table.Tbody>
                                 {attendanceList.map((record) => {
-                                        const memberMeta = getLocalizedMemberMeta(record, t, language);
+                                    const memberMeta = getLocalizedMemberMeta(record, t, language);
                                     const checkInTime = record.checkInTime || getCheckInTime(record);
-                                        const memberStatus = attendanceStatusMeta[record.attendanceStatus] || attendanceStatusMeta.present;
+                                    const memberStatus = attendanceStatusMeta[record.attendanceStatus] || attendanceStatusMeta.present;
 
                                     return (
                                         <Table.Tr key={record.id ?? `${memberMeta.id ?? memberMeta.name}-${checkInTime}`}>
@@ -627,8 +676,6 @@ const Attendance = () => {
                     </Table.ScrollContainer>
                 )}
             </Card>
-
-           
         </div>
     );
 };

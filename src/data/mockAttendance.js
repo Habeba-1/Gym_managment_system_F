@@ -1,6 +1,6 @@
 export const mockMembers = [
     {
-        id: 'member-001',
+        id: 1,
         name: 'Ahmed Mohamed',
         nameAr: 'أحمد محمد',
         phone: '010 1234 5678',
@@ -9,7 +9,7 @@ export const mockMembers = [
         checkInTime: null,
     },
     {
-        id: 'member-002',
+        id: 2,
         name: 'Sara Ahmed',
         nameAr: 'سارة أحمد',
         phone: '011 2345 6789',
@@ -18,7 +18,7 @@ export const mockMembers = [
         checkInTime: '2026-09-30T09:05:00',
     },
     {
-        id: 'member-003',
+        id: 3,
         name: 'Omar Hassan',
         nameAr: 'عمر حسن',
         phone: '012 3456 7890',
@@ -27,7 +27,7 @@ export const mockMembers = [
         checkInTime: null,
     },
     {
-        id: 'member-004',
+        id: 4,
         name: 'Mariam Ali',
         nameAr: 'مريم علي',
         phone: '010 9876 5432',
@@ -36,7 +36,7 @@ export const mockMembers = [
         checkInTime: '2026-09-30T11:10:00',
     },
     {
-        id: 'member-005',
+        id: 5,
         name: 'Youssef Mahmoud',
         nameAr: 'يوسف محمود',
         phone: '015 4567 8910',
@@ -45,7 +45,7 @@ export const mockMembers = [
         checkInTime: null,
     },
     {
-        id: 'member-006',
+        id: 6,
         name: 'Nour Khaled',
         nameAr: 'نور خالد',
         phone: '010 5555 1234',
@@ -54,7 +54,7 @@ export const mockMembers = [
         checkInTime: null,
     },
     {
-        id: 'member-007',
+        id: 7,
         name: 'Karim Adel',
         nameAr: 'كريم عادل',
         phone: '011 7777 8888',
@@ -63,7 +63,7 @@ export const mockMembers = [
         checkInTime: null,
     },
     {
-        id: 'member-008',
+        id: 8,
         name: 'Hana Samir',
         nameAr: 'هنا سمير',
         phone: '012 9999 1111',
@@ -72,12 +72,36 @@ export const mockMembers = [
         checkInTime: '2026-09-30T11:10:00',
     },
     {
-        id: 'member-009',
+        id: 9,
         name: 'Amr Fathy',
         nameAr: 'عمرو فتحي',
         phone: '015 2222 3333',
         photo: null,
         attendanceStatus: 'not_coming',
         checkInTime: null,
+    },
+];
+
+export const mockAttendanceRecords = [
+    {
+        id: 'attendance-001',
+        memberId: 2,
+        memberName: 'Sara Ahmed',
+        checkInTime: '2026-09-30T09:05:00.000Z',
+        status: 'Present',
+    },
+    {
+        id: 'attendance-002',
+        memberId: 4,
+        memberName: 'Mariam Ali',
+        checkInTime: '2026-09-30T11:10:00.000Z',
+        status: 'Present',
+    },
+    {
+        id: 'attendance-003',
+        memberId: 8,
+        memberName: 'Hana Samir',
+        checkInTime: '2026-09-30T11:10:00.000Z',
+        status: 'Late',
     },
 ];
