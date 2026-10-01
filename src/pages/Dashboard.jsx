@@ -17,6 +17,7 @@ import { MdOutlineFitnessCenter } from 'react-icons/md';
 import SharedTabs from '../Menu/SharedTabs';
 import Logo from '../components/Logo.jsx';
 import NavBar from '../Header/NavBar';
+import DashboardFooter from '../components/DashboardFooter';
 import { AuthContext } from '../AuthContext/AuthProvider';
 
 const TAB_VALUES_TEMPLATE = [
@@ -155,8 +156,11 @@ const Dashboard = () => {
                     />
 
                     {/* Scrollable View Content */}
-                    <main data-panel="true" className="flex-1 w-full overflow-y-auto bg-slate-50 dark:bg-[#0c101d] p-4 md:p-6 lg:p-8 transition-colors">
-                        <Outlet context={{ setIsSidebarOpen, isSidebarOpen, isMobileScreen, searchQuery, setSearchQuery }} />
+                    <main data-panel="true" className="flex-1 w-full overflow-y-auto max-lg:no-scrollbar bg-slate-50 dark:bg-[#0c101d] p-4 md:p-6 lg:p-8 transition-colors flex flex-col justify-between">
+                        <div className="flex-1 w-full">
+                            <Outlet context={{ setIsSidebarOpen, isSidebarOpen, isMobileScreen, searchQuery, setSearchQuery }} />
+                        </div>
+                        <DashboardFooter />
                     </main>
                 </div>
             </div>
