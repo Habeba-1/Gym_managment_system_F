@@ -66,8 +66,8 @@ const NavBar = ({ setIsSidebarOpen, isSidebarOpen }) => {
 
             {/* RIGHT: Action Group */}
             <div className="flex items-center gap-2 md:gap-3">
-                {/* Language Toggle (Desktop) */}
-                <div className="hidden md:flex">
+                {/* Language Toggle */}
+                <div className="flex">
                     <Tooltip
                         label={t(language === 'en' ? 'common.switchToArabic' : 'common.switchToEnglish')}
                         withArrow
@@ -89,8 +89,8 @@ const NavBar = ({ setIsSidebarOpen, isSidebarOpen }) => {
                     </Tooltip>
                 </div>
 
-                {/* Theme Toggle (Desktop) */}
-                <div className="hidden md:flex">
+                {/* Theme Toggle */}
+                <div className="flex">
                     <Tooltip
                         label={isDarkMode ? t('common.lightMode', 'Light Mode') : t('common.darkMode', 'Dark Mode')}
                         withArrow
@@ -132,36 +132,6 @@ const NavBar = ({ setIsSidebarOpen, isSidebarOpen }) => {
                         >
                             {t('nav.role')}: {t(userRoleKey, user?.role || t('staff.owner'))}
                         </Menu.Item>
-
-                        {/* Responsive: Mode and Language inside Captain menu */}
-                        <div className="md:hidden">
-                            <Menu.Divider />
-                            <Menu.Label className="dark:text-gray-400!">
-                                {t('nav.settings', 'Settings')}
-                            </Menu.Label>
-                            <Menu.Item
-                                leftSection={<RiGlobalLine size={18} className="text-main" />}
-                                onClick={toggleLanguage}
-                                className="dark:text-slate-200!"
-                            >
-                                <span className="font-bold text-xs uppercase">{language}</span>
-                            </Menu.Item>
-                            <Menu.Item
-                                leftSection={
-                                    isDarkMode ? (
-                                        <MdOutlineLightMode size={16} className="text-amber-400" />
-                                    ) : (
-                                        <MdOutlineDarkMode size={16} className="text-slate-700 dark:text-white" />
-                                    )
-                                }
-                                onClick={toggleTheme}
-                                className="dark:text-slate-200!"
-                            >
-                                <div className="flex items-center justify-between w-full">
-                                    <span>{isDarkMode ? t('common.lightMode', 'Light Mode') : t('common.darkMode', 'Dark Mode')}</span>
-                                </div>
-                            </Menu.Item>
-                        </div>
 
                         <Menu.Divider />
                         <Menu.Item
