@@ -55,40 +55,23 @@ const Login = () => {
     }
 
     try {
-      const response = await loginApi({
-        identifier,
-        password,
-      }).unwrap();
-      login(response);
-      navigate("/dashboard");
+      const response = await loginApi({ identifier, password }).unwrap();
+      const ok = login(response); // تأكدي إنها بتحفظ الـ access_token والـ user data
+      if (ok) {
+        navigate("/dashboard");
+      } else {
+        setServerError("auth.errors.serverError");
+      }
     } catch (err) {
-      // Demo fallback if backend is offline
-      login({
-        user: {
-          id: 1,
-          name: identifier.includes("owner")
-            ? "Captain Ahmed"
-            : "Sarah Receptionist",
-          role: identifier.includes("owner") ? "owner" : "receptionist",
-          gym_id: "gym-001",
-        },
-        token: "demo-jwt-token",
-      });
-      navigate("/dashboard");
+      if (err?.status === 401) {
+        setServerError("auth.errors.invalidCredentials");
+      } else if (err?.status) {
+        setServerError("auth.errors.serverError");
+      } else {
+        setServerError("auth.errors.networkError");
+      }
     }
   };
-
-  {
-    /* 
-    catch (err) {
-  if (err?.status) {
-    setServerError('auth.errors.invalidCredentials');
-  } else {
-    setServerError('auth.errors.networkError');
-  }
-}
-    */
-  }
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-slate-50 dark:bg-[#0c101d]">
@@ -108,11 +91,11 @@ const Login = () => {
           </p>
         </div>
 
-        {/* {errors && (
+        {serverError && (
           <div className="mb-4 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 text-xs font-semibold border border-rose-200 dark:border-rose-900/60">
-            {errors}
+            {t(serverError)}
           </div>
-        )} */}
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -120,6 +103,7 @@ const Login = () => {
               {t("auth.identifier", "Email or Phone Number")}
             </label>
             <Input
+              // dir="auto"
               leftSection={<FiMail size={16} className="text-textColor" />}
               value={identifier}
               onChange={(e) => {
@@ -143,6 +127,7 @@ const Login = () => {
               {t("auth.password", "Password")}
             </label>
             <PasswordInput
+              // dir="auto"
               leftSection={<FiLock size={16} className="text-textColor" />}
               value={password}
               onChange={(e) => {

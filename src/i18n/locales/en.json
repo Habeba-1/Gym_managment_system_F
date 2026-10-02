@@ -35,15 +35,18 @@
     "rememberMe": "Remember me",
     "signInBtn": "Sign In",
     "loggingIn": "Signing in...",
-    "invalidCredentials": "Invalid email/phone or password",
     "loggedOut": "You have been logged out successfully",
+    "unauthorizedTitle": "Access Denied",
+    "unauthorizedMessage": "You don't have permission to access this page. Please contact your administrator if you believe this is a mistake.",
+    "backToDashboard": "Back to Dashboard",
     "errors": {
       "identifierRequired": "Please enter your email or phone number",
       "identifierInvalid": "Email or phone number is invalid",
       "passwordRequired": "Please enter your password",
       "passwordShort": "Password must be at least 8 characters",
       "invalidCredentials": "Invalid email/phone or password",
-      "networkError": "Could not connect to the server. Please check your internet connection and try again"
+      "networkError": "Could not connect to the server. Please check your internet connection and try again",
+      "serverError": "Something went wrong. Please try again"
     }
   },
   "common": {
