@@ -38,8 +38,8 @@ const Login = () => {
   const { login } = useContext(AuthContext);
   const [loginApi, { isLoading }] = useLoginMutation();
 
-  const [identifier, setIdentifier] = useState("owner@fitpulse.com");
-  const [password, setPassword] = useState("password123");
+  const [identifier, setIdentifier] = useState("");
+  const [password, setPassword] = useState("");
   const [errors, setErrors] = useState({});
   const [serverError, setServerError] = useState("");
 
@@ -47,16 +47,45 @@ const Login = () => {
     e.preventDefault();
     setErrors({});
     setServerError("");
-    const validationErrors = checkForm(identifier, password);
 
+    const validationErrors = checkForm(identifier, password);
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       return;
     }
 
+    // ============================================================
+    // DEMO MODE - يشتغل من غير سيرفر
+    // لما الباك إند يشتغل، امسح البلوك ده وفعّل الكود المعلّق تحت
+    // ============================================================
+    // const isOwnerDemo = identifier.toLowerCase().includes("owner");
+    // const demoResponse = {
+    //   data: {
+    //     user: {
+    //       id: isOwnerDemo ? 1 : 2,
+    //       name: isOwnerDemo ? "Captain Ahmed" : "Sarah Receptionist",
+    //       email: identifier,
+    //       role: isOwnerDemo ? "owner" : "receptionist",
+    //       gym_id: "gym-001",
+    //     },
+    //     access_token: "demo-jwt-token-" + Date.now(),
+    //   },
+    // };
+
+    // const ok = login(demoResponse);
+    // if (ok) {
+    //   navigate("/dashboard");
+    // } else {
+    //   setServerError("auth.errors.serverError");
+    // }
+    // ============================================================
+
+    // ============================================================
+    // PRODUCTION MODE - فعّل البلوك ده لما الباك إند يشتغل
+    // ============================================================
     try {
       const response = await loginApi({ identifier, password }).unwrap();
-      const ok = login(response); // تأكدي إنها بتحفظ الـ access_token والـ user data
+      const ok = login(response);
       if (ok) {
         navigate("/dashboard");
       } else {
@@ -71,6 +100,7 @@ const Login = () => {
         setServerError("auth.errors.networkError");
       }
     }
+    // ============================================================
   };
 
   return (
