@@ -38,10 +38,50 @@ const Login = () => {
   const { login } = useContext(AuthContext);
   const [loginApi, { isLoading }] = useLoginMutation();
 
-  const [identifier, setIdentifier] = useState("");
-  const [password, setPassword] = useState("");
+  const [identifier, setIdentifier] = useState("owner@fitpulse.com");
+  const [password, setPassword] = useState("password123");
   const [errors, setErrors] = useState({});
   const [serverError, setServerError] = useState("");
+
+  //   // ============================================================
+  //   // PRODUCTION MODE - فعّل البلوك ده لما الباك إند يشتغل
+  //   // ============================================================
+
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+  //   setErrors({});
+  //   setServerError("");
+
+  //   const validationErrors = checkForm(identifier, password);
+  //   if (Object.keys(validationErrors).length > 0) {
+  //     setErrors(validationErrors);
+  //     return;
+  //   }
+  //   // ============================================================
+
+  //   try {
+  //     const response = await loginApi({ identifier, password }).unwrap();
+  //     const ok = login(response);
+  //     if (ok) {
+  //       navigate("/dashboard");
+  //     } else {
+  //       setServerError("auth.errors.serverError");
+  //     }
+  //   } catch (err) {
+  //     if (err?.status === 401) {
+  //       setServerError("auth.errors.invalidCredentials");
+  //     } else if (err?.status) {
+  //       setServerError("auth.errors.serverError");
+  //     } else {
+  //       setServerError("auth.errors.networkError");
+  //     }
+  //   }
+  //   // ============================================================
+  // };
+
+  // ============================================================
+  // NEW LOGIC - Demo Authentication (Email + Password Only)
+  // ============================================================
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -54,53 +94,32 @@ const Login = () => {
       return;
     }
 
-    // ============================================================
-    // DEMO MODE - يشتغل من غير سيرفر
-    // لما الباك إند يشتغل، امسح البلوك ده وفعّل الكود المعلّق تحت
-    // ============================================================
-    // const isOwnerDemo = identifier.toLowerCase().includes("owner");
-    // const demoResponse = {
-    //   data: {
-    //     user: {
-    //       id: isOwnerDemo ? 1 : 2,
-    //       name: isOwnerDemo ? "Captain Ahmed" : "Sarah Receptionist",
-    //       email: identifier,
-    //       role: isOwnerDemo ? "owner" : "receptionist",
-    //       gym_id: "gym-001",
-    //     },
-    //     access_token: "demo-jwt-token-" + Date.now(),
-    //   },
-    // };
-
-    // const ok = login(demoResponse);
-    // if (ok) {
-    //   navigate("/dashboard");
-    // } else {
-    //   setServerError("auth.errors.serverError");
-    // }
-    // ============================================================
-
-    // ============================================================
-    // PRODUCTION MODE - فعّل البلوك ده لما الباك إند يشتغل
-    // ============================================================
     try {
-      const response = await loginApi({ identifier, password }).unwrap();
-      const ok = login(response);
+      const isOwner = identifier.trim().toLowerCase().includes("owner");
+
+      const demoResponse = {
+        data: {
+          user: {
+            id: isOwner ? 1 : 2,
+            name: isOwner ? "Captain Ahmed" : "Sarah Receptionist",
+            email: identifier.trim(),
+            role: isOwner ? "owner" : "receptionist",
+            gym_id: "gym-001",
+          },
+          access_token: "demo-jwt-token-" + Date.now(), // 👈 الاسم الصح
+        },
+      };
+
+      const ok = login(demoResponse);
+
       if (ok) {
         navigate("/dashboard");
       } else {
         setServerError("auth.errors.serverError");
       }
     } catch (err) {
-      if (err?.status === 401) {
-        setServerError("auth.errors.invalidCredentials");
-      } else if (err?.status) {
-        setServerError("auth.errors.serverError");
-      } else {
-        setServerError("auth.errors.networkError");
-      }
+      setServerError("auth.errors.serverError");
     }
-    // ============================================================
   };
 
   return (
@@ -121,11 +140,12 @@ const Login = () => {
           </p>
         </div>
 
-        {serverError && (
+        {/* UnComment when the server start */}
+        {/* {serverError && (
           <div className="mb-4 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 text-xs font-semibold border border-rose-200 dark:border-rose-900/60">
             {t(serverError)}
           </div>
-        )}
+        )} */}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
